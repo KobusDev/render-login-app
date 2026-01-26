@@ -11,8 +11,8 @@ const db = new sqlite3.Database("./users.db");
 db.run(`
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  Home,
-  Kobus@jvr
+  username TEXT UNIQUE,
+  password TEXT
 )
 `);
 
