@@ -32,7 +32,8 @@
       const msg = document.getElementById("message");
       if (data.success) {
         msg.style.color = "green";
-        msg.innerText = "Registration successful! Go to login.";
+        msg.innerText = "Registration successful! Redirecting to login...";
+        setTimeout(() => { window.location.href = "/"; }, 1500);
       } else {
         msg.style.color = "red";
         msg.innerText = data.error || "Registration failed";
