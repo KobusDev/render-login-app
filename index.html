@@ -34,12 +34,12 @@
 
       const msg = document.getElementById("message");
       if (data.success) {
-        msg.style.color = "green";
-        msg.innerText = "Login successful!";
+        window.location.href = "/dashboard"; // redirect to dashboard
       } else {
         msg.style.color = "red";
         msg.innerText = data.error || "Login failed";
       }
+
     }
   </script>
 </body>
