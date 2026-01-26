@@ -1,7 +1,12 @@
 {
   "name": "render-login-app",
   "version": "1.0.0",
-  "description": "Simple login app",
+  "dependencies": {
+  "express": "^4.18.2",
+  "bcrypt": "^5.1.0",
+  "sqlite3": "^5.1.7"
+}
+
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
