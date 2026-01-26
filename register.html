@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+  <style>
+    body { font-family: Arial; max-width: 400px; margin: 50px auto; }
+    input { display: block; width: 100%; padding: 10px; margin: 10px 0; }
+    button { padding: 10px; width: 100%; }
+    #message { color: red; }
+  </style>
+</head>
+<body>
+  <h2>Register</h2>
+  <div id="message"></div>
+  <input type="text" id="username" placeholder="Username" />
+  <input type="password" id="password" placeholder="Password" />
+  <button onclick="register()">Register</button>
+  <p>Already have an account? <a href="index.html">Login</a></p>
+
+  <script>
+    async function register() {
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const response = await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await response.json();
+
+      const msg = document.getElementById("message");
+      if (data.success) {
+        msg.style.color = "green";
+        msg.innerText = "Registration successful! Go to login.";
+      } else {
+        msg.style.color = "red";
+        msg.innerText = data.error || "Registration failed";
+      }
+    }
+  </script>
+</body>
+</html>
