@@ -8,7 +8,6 @@
   },
   "dependencies": {
     "express": "^4.18.2",
-    "bcryptjs": "^2.4.3",
-    "sqlite3": "^5.1.7"
+    "bcryptjs": "^2.4.3"
   }
 }
