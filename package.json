@@ -1,14 +1,15 @@
 {
   "name": "render-login-app",
   "version": "1.0.0",
-  "description": "Simple login app",
+  "description": "Login app with PostgreSQL and sessions",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-  "express": "^4.18.2",
-  "bcryptjs": "^2.4.3",
-  "pg": "^8.11.1",
-  "express-session": "^1.17.3"
+    "express": "^4.18.2",
+    "bcryptjs": "^2.4.3",
+    "pg": "^8.11.1",
+    "express-session": "^1.17.3"
+  }
 }
