@@ -3,14 +3,21 @@
 <head>
   <title>Dashboard</title>
   <style>
-    body { font-family: Arial; max-width: 800px; margin: 50px auto; }
+    body { font-family: Arial; max-width: 900px; margin: 50px auto; }
     input, button { padding: 8px; margin: 5px 0; }
     h3 { margin-top: 30px; }
     ul { list-style-type: none; padding-left: 0; }
     li { margin-bottom: 5px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 8px; text-align: left; }
+    #status { font-weight: bold; margin-top: 10px; }
   </style>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+
 <h2>📊 Dashboard</h2>
 
 <!-- Upload PDF -->
@@ -25,9 +32,26 @@
 <p>Total Income: <span id="income">0</span></p>
 <p>Total Outgoing: <span id="outgoing">0</span></p>
 
+<!-- Chart -->
+<h3>Income vs Outgoing Chart</h3>
+<canvas id="financeChart" width="600" height="300"></canvas>
+
 <!-- Uploaded files -->
 <h3>Uploaded Files</h3>
 <ul id="fileList"></ul>
+
+<!-- Transactions Table -->
+<h3>Transactions</h3>
+<table>
+  <thead>
+    <tr>
+      <th>File</th>
+      <th>Line</th>
+      <th>Amount</th>
+    </tr>
+  </thead>
+  <tbody id="transactionTable"></tbody>
+</table>
 
 <script>
 const form = document.getElementById("uploadForm");
@@ -36,7 +60,9 @@ const fileList = document.getElementById("fileList");
 const incomeEl = document.getElementById("income");
 const outgoingEl = document.getElementById("outgoing");
 
-// Upload PDF
+let chart;
+
+// -------------------- UPLOAD PDF --------------------
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const data = new FormData(form);
@@ -52,7 +78,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-// Load files + summary
+// -------------------- LOAD FILES --------------------
 async function loadFiles(){
   const res = await fetch("/files");
   const files = await res.json();
@@ -64,10 +90,12 @@ async function loadFiles(){
     fileList.appendChild(li);
   });
 
-  loadSummary();
+  await loadSummary();
+  await loadTransactions();
+  await loadChart();
 }
 
-// Load income/outgoing
+// -------------------- LOAD SUMMARY --------------------
 async function loadSummary() {
   const res = await fetch("/summary");
   const data = await res.json();
@@ -76,8 +104,46 @@ async function loadSummary() {
   outgoingEl.innerText = data.totalOutgoing.toFixed(2);
 }
 
-// Initial load
+// -------------------- LOAD TRANSACTIONS --------------------
+async function loadTransactions() {
+  const res = await fetch("/transactions");
+  const data = await res.json();
+
+  const tbody = document.getElementById("transactionTable");
+  tbody.innerHTML = "";
+
+  data.forEach(trx => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${trx.file}</td><td>${trx.line}</td><td>${trx.amount.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// -------------------- LOAD CHART --------------------
+async function loadChart() {
+  const res = await fetch("/summary");
+  const data = await res.json();
+
+  const ctx = document.getElementById("financeChart").getContext("2d");
+  if(chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Income", "Outgoing"],
+      datasets: [{
+        label: "Amount",
+        data: [data.totalIncome, data.totalOutgoing],
+        backgroundColor: ["green", "red"]
+      }]
+    },
+    options: { responsive: true }
+  });
+}
+
+// -------------------- INITIAL LOAD --------------------
 loadFiles();
 </script>
+
 </body>
 </html>
