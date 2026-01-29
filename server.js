@@ -22,9 +22,7 @@ app.use(session({
 // --------- DATABASE ----------
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
 // Create users table if not exists
@@ -67,8 +65,6 @@ app.get("/dashboard", (req, res) => {
 });
 
 // --------- AUTH ----------
-
-// Register API
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.json({ error: "Missing fields" });
@@ -85,7 +81,6 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// Login API
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const result = await pool.query(
@@ -103,24 +98,19 @@ app.post("/login", async (req, res) => {
   res.json({ success: true });
 });
 
-// Logout
 app.get("/logout", (req, res) => {
   req.session.destroy();
   res.redirect("/");
 });
 
-// --------- PDF UPLOAD & LIST ----------
-
-// Upload PDF
+// --------- PDF UPLOAD & FILES ----------
 app.post("/upload", upload.single("pdf"), async (req, res) => {
   if (!req.file) return res.json({ success: false, error: "No file uploaded" });
   res.json({ success: true, filename: req.file.filename });
 });
 
-// Serve uploaded PDFs
 app.use("/uploads", express.static("uploads"));
 
-// List uploaded files
 app.get("/files", (req, res) => {
   fs.readdir("./uploads", (err, files) => {
     if (err) return res.json([]);
@@ -128,7 +118,7 @@ app.get("/files", (req, res) => {
   });
 });
 
-// PDF SUMMARY (income/outgoing)
+// --------- SUMMARY ----------
 app.get("/summary", async (req, res) => {
   const files = fs.readdirSync("./uploads");
   let totalIncome = 0;
@@ -138,16 +128,29 @@ app.get("/summary", async (req, res) => {
     const dataBuffer = fs.readFileSync(path.join("./uploads", file));
     try {
       const pdfData = await pdfParse(dataBuffer);
-      const text = pdfData.text;
+      const lines = pdfData.text.split("\n");
 
-      const amounts = text.match(/[-+]?\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g);
-      if (amounts) {
-        for (const amt of amounts) {
-          const num = parseFloat(amt.replace(/,/g, ""));
-          if (num > 0) totalIncome += num;
-          else totalOutgoing += Math.abs(num);
+      let inTable = false;
+
+      lines.forEach(line => {
+        if(line.includes("Transactions in RAND") || line.match(/Date\s+Description\s+Amount\s+Balance/)){
+          inTable = true;
+          return;
         }
-      }
+        if(inTable && line.trim() === "") inTable = false;
+
+        if(inTable){
+          const parts = line.trim().split(/\s+/);
+          if(parts.length >= 4){
+            const amount = parseFloat(parts[parts.length - 2].replace(/,/g, ""));
+            if (!isNaN(amount)){
+              if(amount > 0) totalIncome += amount;
+              else totalOutgoing += Math.abs(amount);
+            }
+          }
+        }
+      });
+
     } catch (err) {
       console.log("Error parsing PDF:", file, err);
     }
@@ -156,7 +159,7 @@ app.get("/summary", async (req, res) => {
   res.json({ totalIncome, totalOutgoing });
 });
 
-// Get all transactions from PDFs
+// --------- TRANSACTIONS ----------
 app.get("/transactions", async (req, res) => {
   const files = fs.readdirSync("./uploads");
   let transactions = [];
@@ -167,19 +170,31 @@ app.get("/transactions", async (req, res) => {
       const pdfData = await pdfParse(dataBuffer);
       const lines = pdfData.text.split("\n");
 
+      let inTable = false;
+
       lines.forEach(line => {
-        const amounts = line.match(/[-+]?\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g);
-        if (amounts) {
-          amounts.forEach(amt => {
-            const num = parseFloat(amt.replace(/,/g, ""));
-            if (!isNaN(num)) {
-              transactions.push({
-                file,
-                line: line.trim(),
-                amount: num
-              });
-            }
-          });
+        if(line.includes("Transactions in RAND") || line.match(/Date\s+Description\s+Amount\s+Balance/)){
+          inTable = true;
+          return;
+        }
+        if(inTable && line.trim() === "") inTable = false;
+
+        if(inTable){
+          const parts = line.trim().split(/\s+/);
+          if(parts.length >= 4){
+            const date = parts[0];
+            const balance = parseFloat(parts[parts.length - 1].replace(/,/g, ""));
+            const amount = parseFloat(parts[parts.length - 2].replace(/,/g, ""));
+            const description = parts.slice(1, parts.length - 2).join(" ");
+
+            transactions.push({
+              file,
+              date,
+              description,
+              amount,
+              balance
+            });
+          }
         }
       });
 
@@ -190,7 +205,6 @@ app.get("/transactions", async (req, res) => {
 
   res.json(transactions);
 });
-
 
 // --------- START SERVER ----------
 const PORT = process.env.PORT || 3000;
