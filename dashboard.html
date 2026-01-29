@@ -2,17 +2,30 @@
 <html>
 <head>
   <title>Dashboard</title>
+  <style>
+    body { font-family: Arial; max-width: 800px; margin: 50px auto; }
+    input, button { padding: 8px; margin: 5px 0; }
+    h3 { margin-top: 30px; }
+    ul { list-style-type: none; padding-left: 0; }
+    li { margin-bottom: 5px; }
+  </style>
 </head>
 <body>
 <h2>📊 Dashboard</h2>
 
+<!-- Upload PDF -->
 <form id="uploadForm">
   <input type="file" name="pdf" accept="application/pdf" required>
   <button type="submit">Upload PDF</button>
 </form>
-
 <p id="status"></p>
 
+<!-- Summary -->
+<h3>Bank Summary</h3>
+<p>Total Income: <span id="income">0</span></p>
+<p>Total Outgoing: <span id="outgoing">0</span></p>
+
+<!-- Uploaded files -->
 <h3>Uploaded Files</h3>
 <ul id="fileList"></ul>
 
@@ -20,17 +33,17 @@
 const form = document.getElementById("uploadForm");
 const status = document.getElementById("status");
 const fileList = document.getElementById("fileList");
+const incomeEl = document.getElementById("income");
+const outgoingEl = document.getElementById("outgoing");
 
+// Upload PDF
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const data = new FormData(form);
 
-  const res = await fetch("/upload", {
-    method: "POST",
-    body: data
-  });
-
+  const res = await fetch("/upload", { method: "POST", body: data });
   const result = await res.json();
+
   if(result.success){
     status.innerText = "Uploaded successfully!";
     loadFiles();
@@ -39,6 +52,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+// Load files + summary
 async function loadFiles(){
   const res = await fetch("/files");
   const files = await res.json();
@@ -49,8 +63,20 @@ async function loadFiles(){
     li.innerHTML = `<a href="/uploads/${f}" target="_blank">${f}</a>`;
     fileList.appendChild(li);
   });
+
+  loadSummary();
 }
 
+// Load income/outgoing
+async function loadSummary() {
+  const res = await fetch("/summary");
+  const data = await res.json();
+
+  incomeEl.innerText = data.totalIncome.toFixed(2);
+  outgoingEl.innerText = data.totalOutgoing.toFixed(2);
+}
+
+// Initial load
 loadFiles();
 </script>
 </body>
