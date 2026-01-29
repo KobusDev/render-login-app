@@ -3,6 +3,10 @@ const bcrypt = require("bcryptjs");
 const path = require("path");
 const { Pool } = require("pg");
 const session = require("express-session");
+const multer = require("multer");
+const pdfParse = require("pdf-parse");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
@@ -95,4 +99,38 @@ app.get("/logout", (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
+});
+
+const uploadDir = "./uploads";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+const storage = multer.diskStorage({
+  destination: uploadDir,
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  }
+});
+
+app.use("/uploads", express.static("uploads"));
+
+app.get("/files", (req, res) => {
+  fs.readdir("./uploads", (err, files) => {
+    if (err) return res.json([]);
+    res.json(files);
+  });
+});
+
+const upload = multer({ storage });
+
+app.post("/upload", upload.single("pdf"), async (req, res) => {
+  if (!req.file) {
+    return res.json({ success: false, error: "No file uploaded" });
+  }
+
+  res.json({
+    success: true,
+    filename: req.file.filename
+  });
 });
