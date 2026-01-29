@@ -6,7 +6,6 @@ const session = require("express-session");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const fs = require("fs");
-const path = require("path");
 
 const app = express();
 app.use(express.json());
