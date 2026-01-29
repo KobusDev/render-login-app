@@ -156,6 +156,42 @@ app.get("/summary", async (req, res) => {
   res.json({ totalIncome, totalOutgoing });
 });
 
+// Get all transactions from PDFs
+app.get("/transactions", async (req, res) => {
+  const files = fs.readdirSync("./uploads");
+  let transactions = [];
+
+  for (const file of files) {
+    const dataBuffer = fs.readFileSync(path.join("./uploads", file));
+    try {
+      const pdfData = await pdfParse(dataBuffer);
+      const lines = pdfData.text.split("\n");
+
+      lines.forEach(line => {
+        const amounts = line.match(/[-+]?\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g);
+        if (amounts) {
+          amounts.forEach(amt => {
+            const num = parseFloat(amt.replace(/,/g, ""));
+            if (!isNaN(num)) {
+              transactions.push({
+                file,
+                line: line.trim(),
+                amount: num
+              });
+            }
+          });
+        }
+      });
+
+    } catch (err) {
+      console.log("Error parsing PDF:", file, err);
+    }
+  }
+
+  res.json(transactions);
+});
+
+
 // --------- START SERVER ----------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
