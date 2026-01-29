@@ -142,7 +142,7 @@ app.get("/summary", async (req, res) => {
         if(inTable){
           const parts = line.trim().split(/\s+/);
           if(parts.length >= 4){
-            const amount = parseFloat(parts[parts.length - 2].replace(/,/g, ""));
+            const amount = parseFloat(parts[parts.length - 2].replace(/[, ]/g, "")); // note added \u202F
             if (!isNaN(amount)){
               if(amount > 0) totalIncome += amount;
               else totalOutgoing += Math.abs(amount);
@@ -183,8 +183,8 @@ app.get("/transactions", async (req, res) => {
           const parts = line.trim().split(/\s+/);
           if(parts.length >= 4){
             const date = parts[0];
-            const balance = parseFloat(parts[parts.length - 1].replace(/,/g, ""));
-            const amount = parseFloat(parts[parts.length - 2].replace(/,/g, ""));
+            const balance = parseFloat(parts[parts.length - 1].replace(/[, ]/g, ""));
+            const amount = parseFloat(parts[parts.length - 2].replace(/[, ]/g, "")); // note added \u202F
             const description = parts.slice(1, parts.length - 2).join(" ");
 
             transactions.push({
