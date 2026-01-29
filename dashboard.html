@@ -2,14 +2,56 @@
 <html>
 <head>
   <title>Dashboard</title>
-  <style>
-    body { font-family: Arial; max-width: 600px; margin: 50px auto; }
-    button { padding: 10px; }
-  </style>
 </head>
 <body>
-  <h2>Welcome to Dashboard!</h2>
-  <p>You are logged in.</p>
-  <a href="/logout"><button>Logout</button></a>
+<h2>📊 Dashboard</h2>
+
+<form id="uploadForm">
+  <input type="file" name="pdf" accept="application/pdf" required>
+  <button type="submit">Upload PDF</button>
+</form>
+
+<p id="status"></p>
+
+<h3>Uploaded Files</h3>
+<ul id="fileList"></ul>
+
+<script>
+const form = document.getElementById("uploadForm");
+const status = document.getElementById("status");
+const fileList = document.getElementById("fileList");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = new FormData(form);
+
+  const res = await fetch("/upload", {
+    method: "POST",
+    body: data
+  });
+
+  const result = await res.json();
+  if(result.success){
+    status.innerText = "Uploaded successfully!";
+    loadFiles();
+  } else {
+    status.innerText = result.error;
+  }
+});
+
+async function loadFiles(){
+  const res = await fetch("/files");
+  const files = await res.json();
+
+  fileList.innerHTML = "";
+  files.forEach(f => {
+    const li = document.createElement("li");
+    li.innerHTML = `<a href="/uploads/${f}" target="_blank">${f}</a>`;
+    fileList.appendChild(li);
+  });
+}
+
+loadFiles();
+</script>
 </body>
 </html>
